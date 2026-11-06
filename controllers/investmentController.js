@@ -282,6 +282,37 @@ class InvestmentController {
     }
   }
 
+  async deleteTransactionHistory(req, res) {
+    try {
+      const db = getFirestore()
+      const { userId } = req.params
+      const transactionsSnapshot = await db
+        .collection("transactions")
+        .where("userId", "==", userId)
+        .get()
+
+      let deletedCount = 0
+      for (let i = 0; i < transactionsSnapshot.docs.length; i += 500) {
+        const batch = db.batch()
+        const docs = transactionsSnapshot.docs.slice(i, i + 500)
+        docs.forEach((doc) => batch.delete(doc.ref))
+        await batch.commit()
+        deletedCount += docs.length
+      }
+
+      const { response, statusCode } = generateResponse(
+        true,
+        "User transaction history deleted successfully",
+        { userId, deletedCount },
+      )
+      return res.status(statusCode).json(response)
+    } catch (error) {
+      console.error("Delete transaction history error:", error)
+      const { response, statusCode } = generateResponse(false, "Internal server error")
+      return res.status(statusCode).json(response)
+    }
+  }
+
   async getUserInvestmentSummary(req, res) {
     try {
       const db = getFirestore()
@@ -306,6 +337,7 @@ class InvestmentController {
       if (plansSnapshot.empty) {
         const { response, statusCode } = generateResponse(true, "No investment data found", {
           totalInvestment: 0,
+          investmentValue: userData.investmentValue || 0,
           currentBalance: userData.currentBalance || 0,
           totalProfit: userData.totalProfit || 0,
           activePlansCount: 0,
@@ -371,7 +403,9 @@ class InvestmentController {
 
       const summaryData = {
         totalInvestment: Number.parseFloat(totalInvestment.toFixed(2)),
-        investmentValue: Number.parseFloat((totalInvestment + (userData.totalProfit || 0)).toFixed(2)),
+        investmentValue: Number.parseFloat(
+          (userData.investmentValue ?? totalInvestment + (userData.totalProfit || 0)).toFixed(2),
+        ),
         currentBalance: Number.parseFloat((userData.currentBalance || 0).toFixed(2)),
         totalProfit: Number.parseFloat((userData.totalProfit || 0).toFixed(2)),
         activePlansCount,
@@ -461,6 +495,15 @@ class InvestmentController {
             totalAmountInCrypto: newTotalCrypto,
             updatedAt: currentTime,
           })
+
+          const userRef = db.collection("users").doc(transactionData.userId)
+          const userDoc = await userRef.get()
+          if (userDoc.exists && userDoc.data().investmentValue !== undefined) {
+            await userRef.update({
+              investmentValue: Number((userDoc.data().investmentValue + transactionData.amount).toFixed(2)),
+              updatedAt: currentTime,
+            })
+          }
         }
       }
 

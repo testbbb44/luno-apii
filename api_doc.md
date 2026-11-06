@@ -390,6 +390,48 @@ Returns the actual image file with proper headers for display in browser.
 
 ---
 
+## 🔁 Barter Trade Endpoint
+
+### Submit a Barter Trade
+**POST** `/api/trade/barter`
+
+**Request Body:**
+\`\`\`json
+{
+  "fullName": "Jane Doe",
+  "tradeType": "goods for services",
+  "traceId": "1234567890123456",
+  "tradeNumber": "001",
+  "address": "123 Example Street",
+  "zipCode": "10001",
+  "tradeDate": "2099-12-31T12:00:00.000Z"
+}
+\`\`\`
+
+`fullName` must contain at least a first and last name. `traceId` must be exactly 16 digits, `tradeNumber` exactly 3 digits, and `tradeDate` must be in the future. Dates in `MM/YY` format are interpreted as the first day of that month (for example, `09/29` becomes September 1, 2029); other valid date strings are also accepted. `tradeType`, `address`, and `zipCode` are optional. The trade details are stored in the `barterTrades` collection.
+
+**Success response (201):**
+\`\`\`json
+{
+  "success": true,
+  "message": "Barter trade submitted successfully",
+  "data": {
+    "tradeId": "firestore_document_id",
+    "fullName": "Jane Doe",
+    "tradeType": "goods for services",
+    "traceId": "1234567890123456",
+    "tradeNumber": "001",
+    "address": "123 Example Street",
+    "zipCode": "10001",
+    "tradeDate": "2099-12-31T12:00:00.000Z",
+    "createdAt": "2026-11-03T13:21:18.813Z"
+  },
+  "timestamp": "2026-11-03T13:21:18.813Z"
+}
+\`\`\`
+
+---
+
 ## 📊 Error Responses
 
 All endpoints return consistent error responses:

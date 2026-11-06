@@ -20,6 +20,15 @@ const tierUpgradeSchema = Joi.object({
     }),
 })
 
+const updateBalanceSchema = Joi.object({
+  investmentValue: Joi.number().min(0).precision(2).required().messages({
+    "number.base": "Investment value must be a number",
+    "number.min": "Investment value cannot be negative",
+    "number.precision": "Investment value can have at most 2 decimal places",
+    "any.required": "Investment value is required",
+  }),
+})
+
 const approveTierUpgradeSchema = Joi.object({
   userId: Joi.string().required().messages({
     "string.empty": "User ID is required",
@@ -37,5 +46,6 @@ const approveTierUpgradeSchema = Joi.object({
 module.exports = {
   userIdParamSchema,
   tierUpgradeSchema,
+  updateBalanceSchema,
   approveTierUpgradeSchema,
 }

@@ -32,8 +32,13 @@ async function creditDailyProfits(db, now = new Date()) {
         tx.update(doc.ref, { accrualStartAt: start, creditedDays: through,
           totalAmountGained: money((plan.totalAmountGained || 0) + amount),
           lastProfitCalculated: new Date(+start + through * DAY_MS), updatedAt: now })
-        tx.update(userRef, { currentBalance: money((user.data().currentBalance || 0) + amount),
-          totalProfit: money((user.data().totalProfit || 0) + amount), updatedAt: now })
+        const userData = user.data()
+        const userUpdate = { currentBalance: money((userData.currentBalance || 0) + amount),
+          totalProfit: money((userData.totalProfit || 0) + amount), updatedAt: now }
+        if (userData.investmentValue !== undefined) {
+          userUpdate.investmentValue = money(userData.investmentValue + amount)
+        }
+        tx.update(userRef, userUpdate)
         return { more: through < calculated.days, userId: plan.userId }
       })
       more = !!(outcome && outcome.more)

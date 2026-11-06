@@ -20,6 +20,7 @@ const investmentRoutes = require("./routes/investment");
 const adminRoutes = require("./routes/admin");
 const userRoutes = require("./routes/user");
 const imageRoutes = require("./routes/images");
+const tradeRoutes = require("./routes/trade");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -86,6 +87,7 @@ app.use("/api/investment", investmentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/images", imageRoutes);
+app.use("/api/trade", tradeRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -121,6 +123,7 @@ app.listen(PORT, () => {
   console.log(`👨‍💼 Admin endpoints: http://localhost:${PORT}/api/admin/`);
   console.log(`👤 User endpoints: http://localhost:${PORT}/api/user/`);
   console.log(`🖼️ Image endpoints: http://localhost:${PORT}/api/images/`);
+  console.log(`🔁 Trade endpoints: http://localhost:${PORT}/api/trade/`);
   console.log(`📝 Node.js version: ${process.version}`);
 
   // Initialize cron jobs after server starts

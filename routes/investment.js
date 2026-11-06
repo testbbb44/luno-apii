@@ -66,6 +66,12 @@ router.get("/plans/:userId", validateParams(userIdParamSchema), investmentContro
 
 router.get("/transactions/:userId", validateParams(userIdParamSchema), investmentController.getTransactionHistory)
 
+router.delete(
+  "/transactions/:userId",
+  validateParams(userIdParamSchema),
+  investmentController.deleteTransactionHistory,
+)
+
 router.get("/summary/:userId", validateParams(userIdParamSchema), investmentController.getUserInvestmentSummary)
 
 // Manual trigger for daily profits (for testing only)

@@ -2,7 +2,7 @@ const express = require("express")
 const createRateLimiter = require("../middleware/rateLimiter")
 const { upload, handleUploadError } = require("../middleware/fileUpload")
 const userController = require("../controllers/userController")
-const { userIdParamSchema, tierUpgradeSchema } = require("../validators/userValidator")
+const { userIdParamSchema, tierUpgradeSchema, updateBalanceSchema } = require("../validators/userValidator")
 
 const router = express.Router()
 
@@ -52,6 +52,13 @@ router.get("/test", (req, res) => {
 
 // User profile routes
 router.get("/profile/:userId", validateParams(userIdParamSchema), userController.getUserProfile)
+
+router.patch(
+  "/:userId/balance",
+  validateParams(userIdParamSchema),
+  validateRequest(updateBalanceSchema),
+  userController.updateBalance,
+)
 
 router.post(
   "/upgrade-tier",

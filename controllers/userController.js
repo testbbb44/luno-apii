@@ -28,6 +28,53 @@ function calculateProfileCompleteness(userData) {
 }
 
 class UserController {
+  async updateBalance(req, res) {
+    try {
+      const db = getFirestore()
+      const { userId } = req.params
+      const investmentValue = Number(req.body.investmentValue.toFixed(2))
+      const userRef = db.collection("users").doc(userId)
+      const userDoc = await userRef.get()
+
+      if (!userDoc.exists) {
+        const { response, statusCode } = generateResponse(false, "User not found")
+        return res.status(statusCode).json(response)
+      }
+
+      const plansSnapshot = await db
+        .collection("investmentPlans")
+        .where("userId", "==", userId)
+        .where("isActive", "==", true)
+        .get()
+      const totalInvestment = plansSnapshot.docs.reduce(
+        (total, planDoc) => total + (planDoc.data().totalAmountInvested || 0),
+        0,
+      )
+      const totalProfit = Number((investmentValue - totalInvestment).toFixed(2))
+      const updatedAt = new Date()
+
+      await userRef.update({
+        investmentValue,
+        currentBalance: investmentValue,
+        totalProfit,
+        updatedAt,
+      })
+
+      const { response, statusCode } = generateResponse(true, "User investment value updated successfully", {
+        userId,
+        investmentValue,
+        currentBalance: investmentValue,
+        totalProfit,
+        totalInvestment,
+      })
+      return res.status(statusCode).json(response)
+    } catch (error) {
+      console.error("Update user investment value error:", error)
+      const { response, statusCode } = generateResponse(false, "Internal server error")
+      return res.status(statusCode).json(response)
+    }
+  }
+
   async getUserProfile(req, res) {
     try {
       const db = getFirestore()
