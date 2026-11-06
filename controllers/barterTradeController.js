@@ -41,4 +41,24 @@ const createBarterTrade = async (req, res) => {
   }
 }
 
-module.exports = { createBarterTrade }
+const getBarterTrades = async (req, res) => {
+  try {
+    const snapshot = await getFirestore().collection("barterTrades").get()
+    const trades = snapshot.docs.map((doc) => {
+      const data = doc.data()
+      for (const field of ["tradeDate", "createdAt"]) {
+        if (data[field]?.toDate) data[field] = data[field].toDate().toISOString()
+        else if (data[field] instanceof Date) data[field] = data[field].toISOString()
+      }
+      return { ...data, tradeId: doc.id }
+    })
+    const { response, statusCode } = generateResponse(true, "Barter trades retrieved successfully", trades)
+    return res.status(statusCode).json(response)
+  } catch (error) {
+    console.error("Get barter trades error:", error)
+    const { response, statusCode } = generateResponse(false, "Internal server error", null, 500)
+    return res.status(statusCode).json(response)
+  }
+}
+
+module.exports = { createBarterTrade, getBarterTrades }

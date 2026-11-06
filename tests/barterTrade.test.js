@@ -12,6 +12,52 @@ const validTrade = {
   tradeDate: "2099-12-31T12:00:00.000Z",
 }
 
+test("listing barter trades returns document IDs, ISO dates, empty results, and handles failures", async () => {
+  const firebase = require("../config/firebase")
+  const originalGetFirestore = firebase.getFirestore
+  const controllerPath = require.resolve("../controllers/barterTradeController")
+  const cachedController = require.cache[controllerPath]
+  let docs = [{ id: "trade-1", data: () => ({
+    fullName: "Jane Doe",
+    tradeDate: { toDate: () => new Date(validTrade.tradeDate) },
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  }) }]
+  let databaseUnavailable = false
+  firebase.getFirestore = () => ({ collection(name) {
+    if (databaseUnavailable) throw new Error("Database unavailable")
+    assert.equal(name, "barterTrades")
+    return { async get() { return { docs } } }
+  } })
+  delete require.cache[controllerPath]
+  const response = () => ({
+    status(code) { this.statusCode = code; return this },
+    json(payload) { this.payload = payload; return this },
+  })
+  try {
+    const { getBarterTrades } = require(controllerPath)
+    const result = response()
+    await getBarterTrades({}, result)
+    assert.equal(result.statusCode, 200)
+    assert.deepEqual(result.payload.data, [{
+      tradeId: "trade-1", fullName: "Jane Doe", tradeDate: validTrade.tradeDate,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    }])
+    docs = []
+    const empty = response()
+    await getBarterTrades({}, empty)
+    assert.deepEqual(empty.payload.data, [])
+    databaseUnavailable = true
+    const failed = response()
+    await getBarterTrades({}, failed)
+    assert.equal(failed.statusCode, 500)
+    assert.equal(failed.payload.success, false)
+  } finally {
+    firebase.getFirestore = originalGetFirestore
+    delete require.cache[controllerPath]
+    if (cachedController) require.cache[controllerPath] = cachedController
+  }
+})
+
 test("barter trade schema accepts valid future trade details", () => {
   assert.equal(createBarterTradeSchema.validate(validTrade).error, undefined)
 })

@@ -17,6 +17,7 @@ const validateRequest = (schema) => (req, res, next) => {
   next()
 }
 
+router.get("/barter", barterTradeController.getBarterTrades)
 router.post("/barter", validateRequest(createBarterTradeSchema), barterTradeController.createBarterTrade)
 
 module.exports = router
